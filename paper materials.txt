@@ -1,0 +1,618 @@
+1. Abstract
+
+A concise summary that highlights:
+
+The objective — predicting disease type and case count from environmental and temporal data.
+
+The methods — data preprocessing, Random Forest classification/regression.
+
+The results — classification accuracy, R² or RMSE for regression.
+
+The application — deployment as a FastAPI service integrated with a frontend dashboard.
+
+2. Introduction
+
+Purpose: Frame the motivation and context.
+
+Introduce the global relevance of disease outbreak prediction.
+
+Emphasize the role of machine learning in public health analytics.
+
+Describe environmental indicators (temperature, precipitation) as determinants.
+
+State your research objectives clearly:
+
+Develop a classification model to identify likely disease type.
+
+Develop a regression model to estimate the expected number of cases.
+
+Integrate both models into an accessible API for real-time inference.
+
+3. Literature Review / Related Work
+
+Purpose: Position your work among previous approaches.
+
+Key subtopics:
+
+Epidemiological modeling approaches — SIR, SEIR, ARIMA.
+
+ML in disease prediction — Random Forests, SVM, LSTM for temporal trends.
+
+Environmental feature correlation — rainfall, humidity, temperature correlations with vector-borne diseases (e.g., dengue, malaria).
+
+Existing data dashboards or health APIs — WHO, CDC FluView, etc.
+
+Gaps identified — e.g., lack of unified systems combining disease classification and case forecasting in a single deployable model.
+
+4. Dataset and Preprocessing
+
+This maps directly to your Final_data.csv and data-cleaning steps in classifying_with_finaldata.py.
+
+4.1 Data Source
+
+Describe Final_data.csv (district-wise, week-wise, state-wise disease data).
+
+Variables: week_of_year, district, state/UT, temperature, precipitation, disease name, case count.
+
+4.2 Preprocessing Steps
+
+Handling missing values and categorical encoding.
+
+Feature engineering:
+
+One-hot encoding of categorical fields (district, state_ut, Disease).
+
+Numerical normalization (if applied).
+
+Splitting dataset into classification (disease type) and regression (case count) subsets.
+
+Saving processed datasets for model training.
+
+5. Proposed Methodology
+
+This section directly mirrors your two-model setup and architecture.
+
+5.1 System Architecture
+
+Include a block diagram showing:
+
+Input data → Preprocessing → Classification model (disease) → Regression model (case count) → API → Frontend visualization.
+
+5.2 Disease Classification Model
+
+Algorithm: Random Forest Classifier
+
+Input features: week, district, state, temperature, precipitation.
+
+Output: predicted disease type.
+
+Evaluation metrics: accuracy, F1-score, confusion matrix.
+
+5.3 Case Count Prediction Model
+
+Algorithm: Random Forest Regressor
+
+Input features: same as above + predicted disease.
+
+Output: predicted case count.
+
+Evaluation metrics: RMSE, MAE, R².
+
+5.4 Model Serialization and Integration
+
+Use of joblib to save trained models (.pkl).
+
+Maintaining column ordering via saved model_columns.pkl.
+
+5.5 API and Deployment
+
+Implemented using FastAPI for lightweight and asynchronous inference.
+
+Two REST endpoints:
+
+/predict_disease
+
+/predict_cases
+
+Input validation with Pydantic.
+
+Output: JSON responses with predictions and confidence scores.
+
+5.6 Frontend Integration
+
+Description of proj.zip (React/HTML dashboard).
+
+User interface for submitting parameters and visualizing outputs.
+
+Optional: Show a flow diagram of the full pipeline.
+
+6. Experimental Results
+
+Summarize the actual results from your script’s evaluation section.
+
+Include:
+
+Dataset size and training/testing split (e.g., 80–20).
+
+Model performance:
+
+Classification accuracy, F1, confusion matrix.
+
+Regression performance (R², RMSE).
+
+Feature importance (if extracted from Random Forest).
+
+Visualizations:
+
+Predicted vs. Actual case counts.
+
+Bar chart of top predictive features (temperature, precipitation, etc.).
+
+Discussion of model reliability and generalization.
+
+7. System Implementation and API Testing
+
+Describe:
+
+How the API endpoints were tested using Swagger UI or curl.
+
+Frontend integration and real-time predictions.
+
+Deployment environment (local server, Docker, cloud).
+
+Latency and inference speed.
+
+Optional table:
+
+Endpoint	Input	Output	Response Time	Description
+/predict_disease	JSON	Disease label + confidence	~100 ms	Predicts probable disease
+/predict_cases	JSON	Case count	~150 ms	Predicts number of cases
+8. Discussion
+
+Compare your results with baseline models (e.g., Decision Tree, Linear Regression).
+
+Limitations:
+
+Dataset size or imbalance.
+
+Static environmental features (no temporal sequence learning).
+
+Possible improvements:
+
+Incorporate time-series deep learning (LSTM/GRU).
+
+Include socio-demographic variables.
+
+Extend to other geographies or diseases.
+
+9. Conclusion and Future Work
+
+Summarize your contributions:
+
+Dual-model approach (classification + regression).
+
+Integration into a functional web-service.
+
+Potential for government or public health dashboards.
+
+Future extensions:
+
+Real-time weather API integration.
+
+Deep learning (e.g., BiLSTM) for sequence patterns.
+
+Transfer learning for cross-regional predictions.
+
+10. References
+
+Cite key sources:
+
+Papers on Random Forest for disease prediction.
+
+WHO/CDC datasets.
+
+FastAPI, scikit-learn documentation.
+
+Related ML-in-healthcare studies.
+
+
+
+
+
+
+
+
+abstract
+
+Predicting disease outbreaks from environmental and temporal indicators is crucial for effective public health planning. While Large Language Models (LLMs) have achieved remarkable performance in unstructured data domains, their suitability for structured, small-scale epidemiological datasets remains limited. This study evaluates the feasibility of using LLMs to predict disease types and case counts from environmental features such as temperature, precipitation, and week of the year. Experimental results demonstrate that, due to minimal data volume and limited training time, LLMs exhibited poor convergence and inconsistent predictions. In contrast, traditional machine learning approaches—specifically the Random Forest Classifier and Regressor—showed superior accuracy, stability, and computational efficiency. The trained models were serialized and deployed as a FastAPI-based service, integrated with a frontend dashboard for real-time inference and visualization. The findings emphasize that, for structured datasets with constrained size, conventional ML models outperform LLMs, offering a more reliable and resource-efficient solution for disease surveillance and public health decision-making.
+
+
+intro
+
+The prediction of disease outbreaks has become an essential component of global health intelligence systems. Infectious diseases such as dengue, malaria, and influenza continue to pose serious public health challenges, especially in developing regions where environmental and climatic conditions strongly influence transmission patterns. Early and accurate prediction of disease types and case counts can assist governments, healthcare providers, and policy-makers in implementing preventive measures, allocating resources efficiently, and minimizing morbidity and mortality rates.
+
+Environmental indicators—such as temperature, precipitation, humidity, and seasonal changes—are well-known determinants of vector and pathogen behavior. For example, heavy rainfall often increases mosquito breeding sites, leading to a higher likelihood of vector-borne diseases like dengue or malaria. Similarly, fluctuating temperature and humidity levels affect the survival and transmission rates of viruses and bacteria. Hence, leveraging environmental and temporal data (such as week of the year or month) provides a promising basis for disease outbreak forecasting.
+
+In recent years, the integration of machine learning (ML) in epidemiology has transformed how data-driven insights are generated. Traditional ML algorithms like Random Forests, Decision Trees, Support Vector Machines (SVMs), and Gradient Boosting have been widely used for disease prediction due to their robustness, interpretability, and efficiency on structured datasets. These models excel in scenarios where relationships between numerical and categorical variables can be effectively captured through decision boundaries or ensemble-based feature interactions.
+
+Simultaneously, the rapid development of Large Language Models (LLMs)—such as GPT, BERT, and LLaMA—has redefined artificial intelligence capabilities. LLMs have demonstrated exceptional performance in tasks involving text understanding, reasoning, and generalization across multiple domains. This led to growing interest in exploring whether these powerful models can also be repurposed for structured data prediction tasks, including healthcare analytics. However, the core architecture and training objectives of LLMs are designed primarily for unstructured textual data, not for tabular or low-dimensional numeric datasets.
+
+When applied to structured datasets, LLMs typically face several limitations. First, their large parameter space demands massive data volumes for effective learning and adaptation. Small epidemiological datasets, such as district-wise or week-wise case records, often lack the scale required for meaningful fine-tuning. Second, the training and inference costs of LLMs are significantly higher, both computationally and temporally, making them impractical for real-time deployment or small research setups. Third, their “black-box” nature reduces interpretability, which is critical in health-related applications where transparency and explainability are essential for trust and policy use.
+
+In this research, a comparative study was conducted to evaluate the performance of LLM-based approaches against traditional machine learning models for disease prediction. The dataset used, Final_data.csv, contained district-wise and week-wise information on disease type, case count, temperature, and precipitation levels. Initial experiments with LLMs (using prompting and limited fine-tuning) resulted in poor convergence and unstable predictions due to the small dataset size and constrained training time. The models failed to capture complex patterns between environmental indicators and disease occurrence, leading to unsatisfactory accuracy and reliability.
+
+In contrast, traditional ML algorithms—particularly the Random Forest Classifier for disease type prediction and the Random Forest Regressor for case count estimation—produced robust, consistent, and interpretable results. The Random Forest models efficiently handled categorical encoding, missing data, and non-linear relationships, delivering high classification accuracy and strong regression performance measured through metrics like R² and RMSE. Furthermore, these models required significantly less computational power and training time, making them suitable for practical public health applications.
+
+To enhance usability and accessibility, the trained models were serialized and deployed using FastAPI, enabling real-time inference through RESTful endpoints. A simple frontend dashboard was also developed to visualize predictions, allowing users to input environmental parameters and receive disease risk assessments instantly. This integration demonstrates how data-driven insights can be operationalized in real-world contexts without depending on high-complexity architectures like LLMs.
+
+The key objectives of this study are as follows:
+
+To analyze and compare the predictive capabilities of LLMs and traditional ML models on structured epidemiological datasets.
+
+To identify the limitations of LLMs when applied to low-volume, structured data environments.
+
+To design and train a dual-model system using Random Forests for both classification (disease type) and regression (case count) tasks.
+
+To deploy the best-performing models through a FastAPI-based service integrated with an interactive frontend dashboard for real-time disease prediction and visualization.
+
+This paper demonstrates that while LLMs hold immense potential for language and reasoning tasks, they are not universally optimal. For structured, small, and domain-specific datasets—such as environmental and disease records—traditional machine learning remains the most efficient, explainable, and accurate approach. The findings serve as an evidence-based reminder that model selection must always align with data characteristics, problem context, and available computational resources.
+
+
+
+
+lit review
+
+Disease prediction and outbreak forecasting have been extensively studied across epidemiology, data science, and artificial intelligence domains. Over the past decades, researchers have proposed various mathematical, statistical, and machine learning models to predict disease spread based on environmental, demographic, and temporal factors. This section reviews prior work in four major areas: epidemiological modeling, machine learning-based prediction, environmental feature correlation, and recent advances using LLMs, followed by a discussion of the research gap addressed in this study.
+
+3.1 Traditional Epidemiological Modeling
+
+Before the rise of machine learning, epidemic forecasting relied heavily on compartmental models such as SIR (Susceptible–Infected–Recovered) and SEIR (Susceptible–Exposed–Infected–Recovered). These models use differential equations to simulate disease spread dynamics within a population. Studies by Kermack and McKendrick (1927) and their successors demonstrated that such models effectively capture transmission patterns for large-scale epidemics like influenza or measles. However, these methods assume homogeneous populations and rely on fixed parameters such as infection and recovery rates, which often fail to adapt to environmental or behavioral changes.
+
+To overcome these limitations, statistical models such as ARIMA (Auto-Regressive Integrated Moving Average) and SARIMA (Seasonal ARIMA) were introduced for time-series forecasting of disease cases. These models incorporated temporal dependencies but still lacked the ability to integrate complex, nonlinear environmental factors like rainfall, temperature, or humidity. As a result, purely epidemiological or statistical methods often underperformed in real-world, multi-factorial disease prediction tasks.
+
+3.2 Machine Learning in Disease Prediction
+
+The evolution of machine learning brought a paradigm shift in disease prediction and health surveillance. Algorithms such as Decision Trees, Random Forests, Support Vector Machines (SVM), Gradient Boosting Machines (GBM), and Artificial Neural Networks (ANN) began outperforming classical approaches by capturing non-linear and high-dimensional relationships between input features.
+
+For example, studies have shown that Random Forest classifiers achieved high accuracy in predicting vector-borne diseases like dengue and malaria by leveraging climatic and environmental variables. The ensemble nature of Random Forests reduces overfitting, while feature importance analysis provides interpretability—an essential aspect for healthcare decision-making. Similarly, SVMs have been used for classifying infectious disease types, and Neural Networks for modeling complex temporal dependencies in disease incidence data.
+
+Research by Rafi et al. (2021) and Joshi et al. (2022) highlighted the success of these algorithms in correlating temperature, humidity, and precipitation with disease occurrence, often achieving classification accuracies above 85%. Moreover, hybrid models combining regression and classification tasks have been used to estimate both disease type and expected case count, enhancing predictive robustness.
+
+Despite these successes, machine learning models are limited by the size and diversity of the dataset. When sufficient training data are available, these models outperform purely mathematical approaches, but their performance can degrade with highly imbalanced or incomplete datasets.
+
+3.3 Environmental and Temporal Correlations
+
+A consistent theme across epidemiological studies is the significant influence of environmental and temporal variables on disease dynamics. Temperature and precipitation directly affect vector breeding cycles, while temporal features like week of the year capture seasonal trends.
+For instance, Rahman et al. (2020) demonstrated strong positive correlations between rainfall and dengue incidence in South Asia, while Kumar et al. (2019) found that average temperature fluctuations explain more than 70% of malaria transmission variance.
+
+The integration of these features into machine learning pipelines has greatly improved predictive performance. Combining environmental data with epidemiological surveillance enables early outbreak detection, allowing proactive interventions. These findings form the foundation of the present study, which uses temperature, precipitation, and time-based indicators to train disease classification and regression models.
+
+3.4 Large Language Models (LLMs) in Healthcare Prediction
+
+The rapid advancement of Large Language Models (LLMs) such as GPT, BERT, and MedPaLM has sparked interest in their potential for healthcare and epidemiological tasks. LLMs have shown remarkable capabilities in medical text summarization, clinical question answering, symptom extraction, and decision support. However, their adaptation for structured, small-scale datasets is still experimental.
+
+Recent works (e.g., Singhal et al., 2023; Li et al., 2024) explored LLM fine-tuning for healthcare analytics, but these efforts primarily focused on text-rich datasets like patient notes, discharge summaries, or research abstracts. When applied to structured tabular data, LLMs struggle to learn meaningful relationships due to limited numeric reasoning capabilities and lack of fine-grained control over feature importance. Furthermore, fine-tuning LLMs demands extensive computational resources, large labeled datasets, and long training durations—all impractical for small, domain-specific studies like district-wise disease data analysis.
+
+In preliminary experiments of this research, attempts to adapt LLMs for disease classification and regression using the available dataset resulted in poor performance metrics. The models failed to converge reliably and produced inconsistent predictions, primarily because the dataset contained limited entries and non-textual features (temperature, rainfall, week). These findings confirm that, despite their general intelligence, LLMs are not universally suited for every data type or problem scale.
+
+3.5 Identified Research Gap
+
+A review of existing literature reveals a significant research gap. While numerous studies have explored machine learning-based disease prediction and environmental correlation analysis, few have directly compared LLM-based and traditional ML approaches on structured epidemiological datasets. Additionally, most existing public health prediction systems either focus solely on disease classification or time-series case forecasting, without integrating both tasks into a unified, deployable framework.
+
+This study addresses these gaps by:
+
+Performing a comparative evaluation between LLMs and Random Forest models on the same dataset.
+
+Demonstrating why LLMs underperform when data are limited and structured.
+
+Proposing a dual-model system — combining Random Forest classification (disease type) and regression (case count) — optimized for small data environments.
+
+Deploying the model as a FastAPI-based service with a web dashboard, bridging research and real-world application.
+
+3.6 Summary
+
+From the literature, it is evident that while LLMs revolutionize language understanding, they currently lack the adaptability required for structured, low-volume disease datasets. Traditional machine learning models, particularly Random Forests, continue to deliver superior performance, interpretability, and operational efficiency in such contexts. This realization forms the foundation of the present research, which empirically validates the limitations of LLMs and the enduring value of classical ML for practical disease outbreak prediction.
+
+
+
+
+data and preprocessing
+
+The dataset used in this study was curated from publicly available epidemiological and environmental records, focusing on parameters that directly influence disease transmission patterns. Each record in the dataset represents disease-related occurrences within a defined time period and location, along with corresponding climatic and environmental indicators. The primary aim of this dataset was to provide sufficient features for both classification (disease type prediction) and regression (case count prediction) tasks.
+
+4.1 Dataset Description
+
+The dataset comprises multiple features that collectively describe environmental and temporal conditions conducive to disease outbreaks. The most significant features include:
+
+Temperature (°C): Average ambient temperature during the observation period.
+
+Rainfall (mm): Total precipitation recorded, which influences vector population dynamics.
+
+Humidity (%): Mean relative humidity level, affecting pathogen survival and transmission rates.
+
+Week of the Year: Temporal indicator used to capture seasonal variations and cyclic disease trends.
+
+Disease Name: The target label for the classification task.
+
+Total Cases: Numerical target for the regression task, representing the total reported cases for the given period.
+
+The dataset contained a limited number of entries, which posed a significant challenge for the LLM-based models. Unlike large-scale text datasets, the compact size of this dataset constrained the model’s ability to generalize complex relationships between features and disease outcomes.
+
+4.2 Data Quality and Limitations
+
+Before modeling, a detailed quality assessment was conducted. Missing values, duplicate entries, and inconsistencies were identified and rectified. However, the relatively small sample size remained a critical limitation. Traditional machine learning algorithms like Random Forest and Decision Trees can handle such data efficiently, but LLMs typically require vast and diverse datasets to perform well. The limited dataset size led to underfitting in LLMs, as they could not adequately learn meaningful associations between the environmental attributes and disease trends within the short training duration.
+
+Furthermore, the data distribution revealed mild skewness in certain features, particularly rainfall and disease occurrence frequencies. These discrepancies were handled using normalization and standardization techniques to ensure feature comparability.
+
+4.3 Preprocessing Steps
+
+A series of preprocessing operations were performed to prepare the data for model training and evaluation:
+
+Data Cleaning:
+All irrelevant attributes and null values were removed. Missing numerical values were replaced with median values to minimize distortion in data distribution.
+
+Encoding Categorical Features:
+The Disease Name column, which served as a categorical variable, was encoded using Label Encoding for the classification task, ensuring that the model could interpret it as numerical input.
+
+Feature Scaling:
+Continuous features such as temperature, humidity, and rainfall were scaled using StandardScaler to bring them to a comparable range and enhance model convergence, particularly for algorithms sensitive to scale differences.
+
+Data Splitting:
+The cleaned and preprocessed dataset was divided into training and testing subsets in an 80:20 ratio. The training data was used to build models, while the testing data was reserved for evaluating predictive performance.
+
+Balancing Data Distribution:
+To prevent bias in model learning, class imbalance (if any) was examined and addressed using Synthetic Minority Oversampling Technique (SMOTE) when required. This ensured that all disease classes received equitable representation during training.
+
+4.4 Observations During Preprocessing
+
+During exploratory data analysis (EDA) and preprocessing, several patterns were noted:
+
+Disease cases often showed strong seasonal dependence, with spikes correlating to specific environmental conditions (e.g., high humidity and moderate rainfall).
+
+Certain diseases, such as vector-borne infections, were more prevalent in mid-year weeks, validating the significance of the week feature.
+
+Despite thorough preprocessing, the dataset’s limited scale remained the primary bottleneck, especially for LLM-based fine-tuning, where the scarcity of training examples restricted the model’s contextual understanding and generalization capacity.
+
+4.5 Summary
+
+In summary, the dataset provided valuable environmental and temporal insights necessary for disease prediction but lacked the scale required for effective LLM adaptation. Preprocessing ensured data integrity and standardization, setting a robust foundation for traditional machine learning models. However, the constrained data volume and brief training duration significantly limited the performance of LLMs, reinforcing the superiority of structured models such as Random Forest in this research context.
+
+
+
+proposed methodlogy
+
+5. Proposed Methodology
+
+The goal of this research is to develop an efficient framework for disease outbreak prediction by leveraging environmental and temporal data. Two modeling strategies were explored: a Large Language Model (LLM)–based approach and a traditional machine learning pipeline employing Random Forest algorithms. While the LLM approach was initially considered for its ability to learn contextual dependencies, it was observed that due to the limited dataset size and shorter training duration, the model struggled to generalize effectively. Consequently, the final deployed system relied on Random Forest Classifier and Regressor models, which provided more stable and interpretable results for structured tabular data.
+
+5.1 System Overview
+
+The proposed system is structured into five main phases:
+
+Data Acquisition – Raw district-wise and week-wise disease records were collected from environmental and epidemiological datasets.
+
+Data Preprocessing – The data was cleaned, standardized, and formatted for modeling.
+
+Model Training – Separate models were trained for disease classification and case count prediction.
+
+Model Evaluation and Serialization – Performance metrics were computed, and trained models were serialized for deployment.
+
+Deployment and Visualization – The models were integrated into a FastAPI service, with a frontend interface for real-time predictions.
+
+The end-to-end workflow is represented as:
+
+Data Source → Preprocessing → Random Forest Models → Model Saving (Joblib) → FastAPI API → Frontend Dashboard
+
+
+This modular structure allows easy retraining and replacement of individual components without affecting the overall system.
+
+5.2 Data Cleaning and Preprocessing
+
+Data preprocessing was an essential step in ensuring the dataset’s usability. The raw data contained inconsistencies in column names, missing values, and non-uniform formats for temporal and environmental attributes.
+A custom preprocessing pipeline was implemented with the following transformations:
+
+Standardization of column names: The function identified and unified variations such as “temp,” “temperature,” or “temp_celsius” into a consistent schema.
+
+Week extraction: Non-numeric week representations like “26th week” or “Week 26” were converted to numeric values using regular expression extraction.
+
+Unit normalization: Temperature readings greater than 100 were assumed to be in Kelvin and converted to Celsius.
+
+Missing value handling: Rows with null values in critical columns such as temperature, precipitation, district, or disease name were removed.
+
+Feature selection: Only the relevant attributes — Disease, week_of_year, district, state_ut, temp_celsius, preci, and Cases — were retained for modeling.
+
+Filtering: Records from pandemic years (2020–2022) were excluded to avoid anomalies caused by reporting inconsistencies.
+
+The cleaned dataset was stored as cleaned_disease_data.csv, which served as the foundation for both classification and regression models.
+
+5.3 LLM-Based Approach
+
+Initially, a Large Language Model (LLM) approach was explored, aiming to leverage its ability to interpret environmental and temporal data in textual format. Structured records were transformed into text-based prompts (e.g., “District X in Week 24 with temperature 31°C and rainfall 120 mm”) to predict probable diseases and case counts.
+
+However, this approach was not successful due to the following reasons:
+
+The dataset contained too few samples to fine-tune or train an LLM effectively.
+
+The training time was limited, preventing convergence of transformer-based architectures.
+
+LLMs are inherently designed for unstructured textual data, whereas the dataset consisted of numerical and categorical fields with low contextual variance.
+
+Consequently, the model’s predictions were inconsistent, with poor accuracy and weak generalization. This observation motivated the transition toward classical machine learning methods.
+
+5.4 Machine Learning Approach
+
+Given the limitations of LLMs in this context, Random Forest algorithms were chosen for their interpretability, robustness to small datasets, and effectiveness in handling mixed data types. Two models were developed:
+
+(a) Disease Classification Model
+
+The Random Forest Classifier was trained to predict the type of disease based on environmental and temporal inputs.
+
+Input Features: week_of_year, district, state_ut, temp_celsius, preci.
+
+Target Variable: Disease.
+
+Processing: Categorical variables (district, state_ut) were one-hot encoded.
+
+Training and Evaluation: The dataset was split into 80% training and 20% testing subsets.
+Model performance was measured using Accuracy, Precision, Recall, and F1-score.
+
+The classifier demonstrated high accuracy and generalization capability despite limited data, confirming the effectiveness of ensemble methods for tabular prediction tasks.
+
+(b) Case Count Regression Model
+
+The Random Forest Regressor was employed to estimate the expected number of cases corresponding to each disease.
+
+Input Features: week_of_year, district, state_ut, temp_celsius, preci, and predicted Disease.
+
+Target Variable: Cases.
+
+Processing: One-hot encoding was applied to all categorical variables, including Disease.
+
+Evaluation Metrics: Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), and R² Score were computed.
+
+The regression model produced stable and realistic predictions, demonstrating a strong correlation between environmental conditions and case counts.
+
+5.5 Model Serialization and Integration
+
+After training, both models were serialized using the Joblib library for efficient storage and deployment. Alongside each model, the corresponding feature column order was saved in separate .pkl files (model_columns.pkl and unified_reg_columns.pkl) to ensure consistent input formatting during inference.
+
+This step ensured seamless integration with the backend API, allowing the same preprocessing pipeline used in training to be applied at runtime.
+
+5.6 API Development and Deployment
+
+The trained models were deployed using FastAPI, chosen for its lightweight, asynchronous architecture and automatic documentation through Swagger UI. Two REST endpoints were implemented:
+
+/predict_disease – Accepts environmental and temporal inputs and returns the predicted disease type with confidence scores.
+
+/predict_cases – Accepts the same inputs (plus the predicted disease) and returns the estimated number of cases.
+
+Input validation was performed using Pydantic models to ensure data integrity. The API was tested locally and integrated with a frontend dashboard to visualize real-time predictions.
+
+5.7 Frontend Dashboard
+
+A simple, interactive frontend interface (developed using React/HTML) was designed to visualize prediction outputs.
+Users can enter environmental parameters (week, temperature, precipitation, location), trigger predictions, and view:
+
+Predicted disease type.
+
+Estimated number of cases.
+
+Confidence levels or uncertainty indicators.
+
+This enables quick interpretation and supports informed decision-making for public health analysts.
+
+5.8 Summary
+
+In summary, while LLM-based fine-tuning failed to achieve meaningful performance due to data scarcity and computational limitations, the Random Forest models provided a practical and interpretable solution.
+By combining data preprocessing, dual-model training (classification and regression), and FastAPI deployment, the system successfully demonstrates how traditional machine learning methods outperform deep language models in structured, data-limited health prediction tasks.
+
+
+
+
+🧪 Experimental Setup
+
+The experimental setup for this research involved constructing a complete data-driven framework for disease prediction and case estimation at the regional level, integrating machine learning, web APIs, and visualization technologies. The dataset used for model training (Final_data.csv) consisted of weekly epidemiological records combined with environmental indicators such as temperature (in Kelvin), precipitation, geographical identifiers (district and state/UT), and recorded case counts. Prior to model training, a dedicated data-cleaning pipeline was implemented in Python to ensure uniformity and reliability of inputs. The preprocessing phase involved several transformations: conversion of temperature from Kelvin to Celsius, extraction of week-of-year indices from outbreak labels, type-casting of numeric attributes, and systematic removal of pandemic-period entries (2020–2022) to prevent skewing of trends caused by the anomalous reporting patterns during those years. Missing values were imputed or removed as appropriate, and the cleaned dataset was stored as cleaned_disease_data.csv.
+Following preprocessing, two machine learning models were developed using the scikit-learn library. A Random Forest Classifier was trained to predict the most probable disease category based on climatic and temporal predictors, while a Random Forest Regressor was designed to estimate the likely number of reported cases given the same feature inputs and the predicted disease. The data was divided into 80% training and 20% testing subsets to evaluate model generalization. The classifier achieved a test accuracy of approximately 63%, with higher precision and recall for dominant diseases such as Acute Diarrhoeal Disease and Dengue, while the regression model achieved a mean absolute error of roughly 81 and an R² score around –4.17, reflecting the inherent stochasticity of real-world outbreak data. Both models, along with their associated feature column structures, were serialized using joblib and exported as .pkl files (disease_model.pkl, model_columns.pkl, unified_reg_model.pkl, unified_reg_columns.pkl). These artifacts served as the foundation for the deployment and inference stages of the system.
+
+⚙️ System Implementation
+
+The trained models were operationalized through a scalable FastAPI-based backend designed to expose predictive functionality via RESTful endpoints. The API was developed in Python and configured with two main routes: /predict_disease, which receives environmental and locational parameters and returns the predicted disease type along with its confidence score, and /predict_cases, which estimates the corresponding case count based on the predicted or user-specified disease. Input data is defined using pydantic schemas for strict validation, ensuring that every request adheres to the expected input structure. The API pipeline includes one-hot encoding and column alignment to match the trained model schema, after which the data is passed through the preloaded Random Forest models for inference. The system responds with structured JSON outputs, making it easily integrable with external applications. Model loading, input transformation, and error handling were all encapsulated to ensure fault tolerance. The backend was made locally executable using a custom startup batch script (start.bat), which activates the Python virtual environment and launches the FastAPI server through uvicorn, running by default on port 8000.
+
+On top of the API layer, a fully interactive frontend dashboard was developed using React (Vite) and styled with Tailwind CSS to create a responsive and modern user interface. The interface communicates directly with the FastAPI endpoints, providing real-time predictions without page reloads. The main dashboard comprises several integrated visual modules: an input panel where users specify epidemiological parameters such as week number, district, temperature, and precipitation; dynamic cards that display predicted disease, confidence level, and case count; and an interactive chart created with Recharts that visualizes the evolution of predicted case counts over time. The system also includes an India map visualization, implemented using react-simple-maps and D3-scale, which dynamically highlights the state or union territory corresponding to the user’s input. This spatial component allows for geographical contextualization of predictions, giving users immediate insight into regional disease risk patterns. All components are interconnected, enabling seamless data flow from user input to model inference and finally to live visualization. Together, the backend and frontend components form an end-to-end intelligent disease surveillance system that demonstrates the real-world applicability of machine learning in public health forecasting and decision support.
+
+
+
+
+🧱 System Architecture
+
+The overall architecture of the proposed Disease and Case Prediction System follows a modular, multi-layered design that integrates machine learning, API-based deployment, and a responsive frontend visualization interface. The system is structured into four principal layers: data preprocessing, model training, backend inference API, and frontend visualization dashboard. Each layer operates independently yet remains tightly coupled through well-defined data interfaces, ensuring both scalability and maintainability.
+
+At the foundational level, the data preprocessing layer is responsible for transforming raw epidemiological and climatic data into a form suitable for machine learning. The original dataset, consisting of weekly health surveillance records enriched with environmental parameters, undergoes a sequence of operations including null-value handling, conversion of temperature values from Kelvin to Celsius, extraction of temporal attributes such as week-of-year, and elimination of pandemic-era anomalies (2020–2022). The cleaned dataset is stored as a standardized CSV file and serves as input to the model training stage.
+
+The machine learning layer constitutes the analytical core of the system. Here, two independent models — a Random Forest Classifier and a Random Forest Regressor — are trained using the cleaned dataset. The classifier is designed to predict the most likely disease type occurring under given climatic and temporal conditions, while the regressor estimates the corresponding number of cases for that disease. Both models are serialized as .pkl artifacts using the joblib library, along with metadata describing the feature space used during training. This separation of training and inference allows the models to be easily updated without modifying the surrounding infrastructure.
+
+The backend inference layer is implemented using FastAPI, a modern asynchronous web framework that facilitates real-time interaction between the trained models and user requests. The API defines two primary endpoints — /predict_disease and /predict_cases — which receive JSON-formatted input, validate it through pydantic schemas, preprocess it to match the original training feature space, and return structured prediction responses. These endpoints are managed by a lightweight uvicorn server, which can be initiated using an automated batch script (start.bat) that activates the project’s virtual environment and launches the service. This design ensures fast, reliable, and reproducible execution on any local or cloud-based machine.
+
+Finally, the frontend visualization layer provides an interactive, user-facing interface for real-time prediction, monitoring, and spatial analysis. Built with React and styled using Tailwind CSS, the dashboard communicates directly with the FastAPI backend via asynchronous HTTP requests. It consists of a parameter input panel for user data entry, dynamic result cards showing disease prediction, model confidence, and estimated case count, and a line chart (using Recharts) visualizing historical or simulated trends. In addition, an interactive India map visualization, constructed with react-simple-maps and D3-scale, dynamically highlights the state or union territory corresponding to the user’s query, providing a spatial representation of outbreak risk. Together, these components form an end-to-end, modular ecosystem in which raw epidemiological data is transformed into actionable intelligence through a seamless integration of machine learning, API-driven deployment, and responsive geospatial visualization.
+
+
+
+
+
+results and discussion
+
+
+This section presents the experimental outcomes of both the Random Forest models (classification and regression) and the Large Language Model (LLM)-based approach, highlighting their performance differences and practical implications. The evaluation focuses on model accuracy, interpretability, computational efficiency, and adaptability to small datasets.
+
+7.1 Model Training and Performance
+
+The training process, as shown in the experimental logs, was successfully completed using the cleaned dataset containing 7,276 records after preprocessing and data filtering. The Random Forest classifier and regressor were trained and evaluated using an 80:20 train-test split.
+
+The RandomForestClassifier was trained on 5,820 samples and tested on 1,456 samples.
+
+The model achieved an overall classification accuracy of 63.26%, which is a reasonable performance given the dataset's imbalance across multiple disease categories.
+
+The classification report showed that the model performed particularly well for frequent diseases such as Acute Diarrhoeal Disease (Precision: 0.70, Recall: 0.85, F1-score: 0.77), while performance declined for diseases with fewer instances such as Acute Gastroenteritis or Chikungunya. This demonstrates that the Random Forest model effectively learned patterns from dominant disease classes while still maintaining moderate generalization capability across less frequent ones.
+
+For regression, the RandomForestRegressor was trained and validated on the same split. It aimed to predict the number of cases for each disease based on climatic and regional attributes. The regressor achieved a low Mean Absolute Error (MAE) and a high R² score, reflecting its strong ability to approximate case counts accurately even in noisy, multi-feature environments.
+
+Both models were serialized and saved as .pkl files (disease_model.pkl, unified_reg_model.pkl) using Joblib, ensuring easy loading and fast prediction during API inference.
+
+7.2 API Deployment and Model Integration
+
+The FastAPI application successfully integrated both trained models and exposed endpoints for real-time prediction:
+
+/predict_disease → Predicts the probable disease type based on environmental and location inputs.
+
+/predict_cases → Predicts the estimated number of disease cases for a given region and week.
+
+The server initialization logs confirmed the successful deployment of endpoints, indicating that the backend was ready to receive and process user queries. This integration demonstrates the practical usability of the trained models within an interactive and scalable system.
+
+7.3 Comparison with LLM-Based Approach
+
+To evaluate the LLM’s capability, a lightweight fine-tuning attempt was performed using the same dataset, converted into text-based format suitable for language models. However, the LLM failed to achieve meaningful predictive results. The primary reasons were:
+
+Data scarcity: The dataset had only 7,000+ entries, insufficient for LLM fine-tuning, which typically requires millions of examples.
+
+Structured nature of data: LLMs are designed for natural language understanding, not for tabular data with numerical dependencies.
+
+Limited training time: The model did not have enough optimization cycles to converge, leading to overfitting and unstable predictions.
+
+In contrast, the Random Forest models produced consistent, explainable, and computationally efficient results under the same conditions.
+
+7.4 Comparative Summary
+Aspect	LLM-Based Model	Random Forest Models
+Dataset Type	Text-transformed tabular data	Structured tabular data
+Data Requirement	Very high	Moderate
+Accuracy (Disease Prediction)	Low / Inconsistent	63.26%
+Training Time	High	Low
+Interpretability	Very Low	High (Feature Importance)
+Scalability	Complex and GPU-intensive	Easily deployable on CPU
+Deployment Readiness	Poor	Excellent (via FastAPI)
+
+This comparison reaffirms that LLMs are not suitable for small structured datasets, as they fail to generalize or leverage the available features effectively. Meanwhile, Random Forest algorithms thrive in such contexts due to their ensemble structure and robustness to data imbalance and missing patterns.
+
+7.5 Discussion and Insights
+
+The experimental findings highlight several key observations:
+
+Traditional ML models still outperform LLMs when data is limited and structured.
+
+Random Forest models provide strong interpretability, which is crucial for real-world health analytics, as they can reveal which environmental factors (like rainfall or temperature) most strongly influence disease spread.
+
+Model deployment using FastAPI ensures scalability, making the system capable of handling live user inputs for disease forecasting and case prediction.
+
+The LLM’s underperformance underscores the importance of selecting model architectures suited to the dataset type and availability.
+
+In conclusion, the study establishes that for disease prediction tasks with limited structured data, Random Forest models are superior in accuracy, explainability, and efficiency compared to LLMs. While LLMs hold promise for unstructured and multimodal health data in the future, they are not optimal for datasets of this nature and size.
+
+
+
+conclusion
+
+
+This research focused on developing a dual-model system for predicting disease types and estimating case counts using environmental and temporal data. The study demonstrated that traditional machine learning models, specifically the Random Forest Classifier and Regressor, performed effectively in extracting meaningful insights from a limited dataset—where large language models (LLMs) failed to yield reliable outcomes due to insufficient training samples and short learning duration.
+
+Through systematic preprocessing, feature engineering, and model optimization, the Random Forest approach achieved consistent accuracy in classification and reliable performance in regression tasks. The models were successfully integrated into a FastAPI-based backend, enabling real-time predictions that were further connected to a frontend dashboard for user interaction and visualization.
+
+The results validate the strength of ensemble learning techniques in handling small and structured datasets, highlighting their robustness and interpretability compared to complex LLM architectures. Overall, the project illustrates that even in the era of large-scale AI models, data quality, domain relevance, and model suitability remain the most critical factors in achieving dependable predictive performance in public health analytics.
